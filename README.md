@@ -1,5 +1,35 @@
 # aw-watcher-vscode
 
+## This fork
+
+This is a fork of [ActivityWatch/aw-watcher-vscode](https://github.com/ActivityWatch/aw-watcher-vscode), installed from a locally built package under its own id, `bcolloran.aw-watcher-vscode`, so the Marketplace never replaces it. It differs from upstream in three ways:
+
+- When no text file has focus (webviews, terminals, Git Graph), or the file is outside the workspace, the project is the window's first workspace folder instead of "unknown".
+- While the window is focused it sends a heartbeat every `aw-watcher-vscode.focusedHeartbeatIntervalSec` seconds (default 10), so time without editor activity is recorded. Unfocused windows send nothing.
+- Once a day it asks GitHub whether upstream `master` has commits this build lacks, and shows a notification while it does.
+
+It still writes to the same ActivityWatch bucket as upstream (`aw-watcher-vscode_<hostname>`). Do not install the Marketplace extension `activitywatch.aw-watcher-vscode` alongside it: both would report and time would be counted twice. The fork warns on startup if it finds it.
+
+### Updating from upstream
+
+Run these in this repository when the upstream notification appears:
+
+```
+git fetch upstream
+
+git merge upstream/master
+
+npm install
+
+npm run package
+
+code --install-extension aw-watcher-vscode-<version>.vsix
+```
+
+Then reload each VS Code window (Command Palette, "Developer: Reload Window"). Packaging records the new upstream base commit in `out/upstream-base.json`, which is what stops the notification. A build made without `npm run package` has no base recorded and skips the check.
+
+## Upstream README
+
 This extension allows [ActivityWatch](https://activitywatch.net), the free and open-source time tracker, to keep track of the projects and programming languages you use in VS Code.
 
 The extension is published on [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=activitywatch.aw-watcher-vscode) and [Open VSX](https://open-vsx.org/extension/ActivityWatch/aw-watcher-vscode).

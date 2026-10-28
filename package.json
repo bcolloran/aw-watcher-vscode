@@ -1,16 +1,16 @@
 {
     "name": "aw-watcher-vscode",
-    "displayName": "aw-watcher-vscode",
-    "description": "Editor watcher for ActivityWatch, the free and open-source automated time tracker.",
-    "version": "0.5.0",
+    "displayName": "aw-watcher-vscode (bc fork)",
+    "description": "Fork of the ActivityWatch editor watcher: records the workspace when no file has focus, reports while the window is focused, and alerts when upstream has new commits.",
+    "version": "0.5.1",
     "repository": {
         "type": "git",
-        "url": "https://github.com/ActivityWatch/aw-watcher-vscode"
+        "url": "https://github.com/bcolloran/aw-watcher-vscode"
     },
-    "publisher": "activitywatch",
+    "publisher": "bcolloran",
     "author": "ActivityWatch Developers",
     "bugs": {
-        "url": "https://github.com/ActivityWatch/aw-watcher-vscode/issues"
+        "url": "https://github.com/bcolloran/aw-watcher-vscode/issues"
     },
     "engines": {
         "vscode": "^1.23.0"
@@ -32,8 +32,8 @@
     "contributes": {
         "commands": [
             {
-                "command": "extension.reload",
-                "title": "Reload ActivityWatch"
+                "command": "awWatcherVscodeFork.reload",
+                "title": "Reload ActivityWatch (fork)"
             }
         ],
         "configuration": {
@@ -44,6 +44,11 @@
                     "type": "number",
                     "default": 1,
                     "description": "Controls the maximum number of hearbeats sent per second."
+                },
+                "aw-watcher-vscode.focusedHeartbeatIntervalSec": {
+                    "type": "number",
+                    "default": 10,
+                    "description": "While the window is focused, send a heartbeat this often (in seconds) even without editor activity, so time in webviews, terminals and other non-text views is recorded. Keep it below the 20 second pulse time. 0 disables it."
                 }
             }
         }
@@ -54,7 +59,8 @@
         "postinstall": "node ./node_modules/vscode/bin/install",
         "test": "npm run compile && node ./node_modules/vscode/bin/test",
         "test:mocha": "npm run compile && node ./node_modules/mocha/bin/mocha ./out/test/extension.test.js",
-        "vscode:prepublish": "npm run compile"
+        "vscode:prepublish": "npm run compile && bash scripts/write-upstream-base.sh",
+        "package": "npx --yes @vscode/vsce@2.32.0 package"
     },
     "devDependencies": {
         "@types/mocha": "^2.2.42",

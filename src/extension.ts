@@ -3,6 +3,8 @@
 import { Disposable, ExtensionContext, commands, window, workspace, Uri, Extension, extensions } from 'vscode';
 import { AWClient, IAppEditorEvent } from '../aw-client-js/src/aw-client';
 import { hostname } from 'os';
+import { readFileSync } from 'fs';
+import { join, resolve } from 'path';
 import { API, GitExtension } from './git';
 import { UpstreamCheck } from './upstream-check';
 
@@ -28,6 +30,28 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(upstreamCheck);
 
     warnIfUpstreamInstalled();
+}
+
+// Linked worktrees have a .git file reading "gitdir: <main repository>/.git/worktrees/<name>"; a main checkout has a .git directory instead.
+const WORKTREE_GITDIR = /^gitdir:\s*(.+?)[\/\\]\.git[\/\\]worktrees[\/\\][^\/\\]+[\/\\]?\s*$/m;
+const mainRepositoryCache = new Map<string, string>();
+
+// The main repository folder when the given folder is a git worktree, otherwise the folder itself. Results are cached, since heartbeats are frequent and a folder's worktree status does not change while it is open.
+export function mainRepositoryFolder(folder: string): string {
+    let main = mainRepositoryCache.get(folder);
+    if (main === undefined) {
+        main = folder;
+        try {
+            const match = WORKTREE_GITDIR.exec(readFileSync(join(folder, '.git'), 'utf8'));
+            if (match) {
+                main = resolve(folder, match[1]);
+            }
+        } catch {
+            // No .git, or .git is a directory: not a linked worktree
+        }
+        mainRepositoryCache.set(folder, main);
+    }
+    return main;
 }
 
 function warnIfUpstreamInstalled() {
@@ -190,16 +214,23 @@ class ActivityWatch {
     }
 
     private _createHeartbeat(): IAppEditorEvent {
-        return {
+        const folder = this._getProjectFolder();
+        const project = folder && mainRepositoryFolder(folder);
+        const event: IAppEditorEvent = {
             timestamp: new Date(),
             duration: 0,
             data: {
                 language: this._getFileLanguage() || 'unknown',
-                project: this._getProjectFolder() || 'unknown',
+                project: project || 'unknown',
                 file: this._getFilePath() || 'unknown',
                 branch: this._getCurrentBranch() || 'unknown'
             }
         };
+        // A git worktree is reported under its main repository's project, with the worktree itself kept alongside
+        if (folder && project !== folder) {
+            event.data.worktree = folder;
+        }
+        return event;
     }
 
     // The workspace folder of the active file; when no text editor is active, or the file is outside every workspace folder, the window's first workspace folder.

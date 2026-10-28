@@ -2,9 +2,10 @@
 
 ## This fork
 
-This is a fork of [ActivityWatch/aw-watcher-vscode](https://github.com/ActivityWatch/aw-watcher-vscode), installed from a locally built package under its own id, `bcolloran.aw-watcher-vscode`, so the Marketplace never replaces it. It differs from upstream in three ways:
+This is a fork of [ActivityWatch/aw-watcher-vscode](https://github.com/ActivityWatch/aw-watcher-vscode), installed from a locally built package under its own id, `bcolloran.aw-watcher-vscode`, so the Marketplace never replaces it. It differs from upstream in four ways:
 
 - When no text file has focus (webviews, terminals, Git Graph), or the file is outside the workspace, the project is the window's first workspace folder instead of "unknown".
+- A git worktree is reported under its main repository's folder as the project, with the worktree's own folder in an extra `worktree` field. It is detected from the worktree's `.git` file; git itself is never run.
 - While the window is focused it sends a heartbeat every `aw-watcher-vscode.focusedHeartbeatIntervalSec` seconds (default 10), so time without editor activity is recorded. Unfocused windows send nothing.
 - Once a day it asks GitHub whether upstream `master` has commits this build lacks, and shows a notification while it does.
 
